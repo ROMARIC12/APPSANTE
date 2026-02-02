@@ -65,7 +65,7 @@ function checkout() {
     CinetPay.setConfig({
         apikey: '213623621665f9bc06d3b431.84358537', // remplacer par ton apiKey
         site_id: 105907468, // remplacer par ton site_id
-        notify_url: 'http://127.0.0.1:5500/index.html', // remplacer par ton url
+        notify_url: 'https://appsante.onrender.com/index.html', // remplacer par ton url
         mode: 'PRODUCTION'
     });
 
@@ -82,9 +82,9 @@ function checkout() {
         customer_phone_number: "0153754519", //l'email du client
         customer_address: "BP 0024", //addresse du client
         customer_city: "Antananarivo", // La ville du client
-        customer_country: "CM", // le code ISO du pays
-        customer_state: "CM", // le code ISO l'état
-        customer_zip_code: "06510", // code postal
+        customer_country: "CI", // le code ISO du pays
+        customer_state: "CI", // le code ISO l'état
+        customer_zip_code: "99326", // code postal
     });
 
     CinetPay.waitResponse(function (data) {
