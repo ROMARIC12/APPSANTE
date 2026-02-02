@@ -1,104 +1,219 @@
-function addSubscription() {
-    const htmlContent = `
-    <div class="border-b border-gray-300 mb-4 pb-4">
-        <div class="flex items-center mb-2">
-            <svg class="w-8 h-8 rounded-full mr-2" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg"
-                xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 50 50" xml:space="preserve" fill="#000000">
-                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-                <g id="SVGRepo_iconCarrier">
-                    <circle style="fill:#25AE88;" cx="25" cy="25" r="25"></circle>
-                    <polyline
-                        style="fill:none;stroke:#FFFFFF;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;"
-                        points=" 38,15 22,33 12,25 "></polyline>
-                </g>
-            </svg>
-            <h3 class="text-gray-800 font-semibold">Nouvel abonnement réussie</h3>
-        </div>
-        <p class="text-gray-600">Merci de votre soutien, vous recevrez un cadeau dans les prochaines heures.
-        </p>
-    </div>
-    `;
+// Configuration
+const API_URL = "https://my.moneyfusion.net/697c93c41efb8281bec22b69";
+const RETURN_URL = window.location.origin + "/callback.html"; // À créer si nécessaire
 
-    const subscriptionsDiv = document.getElementById('subscriptions');
+// Variables globales
+let currentToken = null;
+let paymentData = null;
 
-    const newDiv = document.createElement('div')
-    newDiv.innerHTML = htmlContent;
+// Initialiser la page
+document.addEventListener('DOMContentLoaded', function() {
+    updateTotal();
+    
+    // Ajouter des écouteurs d'événements pour mettre à jour le total
+    document.querySelectorAll('.article-price').forEach(input => {
+        input.addEventListener('input', updateTotal);
+    });
+});
 
-    subscriptionsDiv.appendChild(newDiv.firstElementChild);
+// Mettre à jour le total
+function updateTotal() {
+    let total = 0;
+    document.querySelectorAll('.article-price').forEach(input => {
+        const price = parseFloat(input.value) || 0;
+        total += price;
+    });
+    document.getElementById('total').value = total;
 }
 
-function addFailedSubscription() {
-    const htmlContent = `
-    <div class="border-b border-red-300 mb-4 pb-4">
-        <div class="flex items-center mb-2">
-            <svg class="w-8 h-8 rounded-full mr-2" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg"
-                xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 50 50" xml:space="preserve" fill="#000000">
-                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-                <g id="SVGRepo_iconCarrier">
-                    <circle style="fill:#D75A4A;" cx="25" cy="25" r="25"></circle>
-                    <polyline
-                        style="fill:none;stroke:#FFFFFF;stroke-width:2;stroke-linecap:round;stroke-miterlimit:10;"
-                        points="16,34 25,25 34,16 "></polyline>
-                    <polyline
-                        style="fill:none;stroke:#FFFFFF;stroke-width:2;stroke-linecap:round;stroke-miterlimit:10;"
-                        points="16,16 25,25 34,34 "></polyline>
-                </g>
-            </svg>
-            <h3 class="text-red-800 font-semibold">L'abonnement a échoué</h3>
-        </div>
-        <p class="text-gray-500">Nous n'avons pas pu traiter votre inscription. Veuillez réessayer plus tard
-            ou contacter le support.</p>
-    </div>
+// Ajouter un article
+function addArticle() {
+    const container = document.getElementById('articles-container');
+    const articleDiv = document.createElement('div');
+    articleDiv.className = 'article-item';
+    articleDiv.innerHTML = `
+        <input type="text" class="article-name" placeholder="Nom de l'article">
+        <input type="number" class="article-price" placeholder="Prix" min="0">
+        <button type="button" class="remove-article" onclick="removeArticle(this)">×</button>
     `;
-
-    const subscriptionsDiv = document.getElementById('subscriptions');
-
-    const newDiv = document.createElement('div');
-    newDiv.innerHTML = htmlContent;
-
-    subscriptionsDiv.appendChild(newDiv.firstElementChild);
+    container.appendChild(articleDiv);
+    
+    // Ajouter l'écouteur d'événement pour le nouveau champ de prix
+    articleDiv.querySelector('.article-price').addEventListener('input', updateTotal);
 }
 
-function checkout() {
-    CinetPay.setConfig({
-        apikey: '213623621665f9bc06d3b431.84358537', // remplacer par ton apiKey
-        site_id: 105907468, // remplacer par ton site_id
-        notify_url: 'https://appsante.onrender.com/index.html', // remplacer par ton url
-        mode: 'PRODUCTION'
-    });
+// Supprimer un article
+function removeArticle(button) {
+    button.parentElement.remove();
+    updateTotal();
+}
 
-    CinetPay.getCheckout({
-        transaction_id: Math.floor(Math.random() * 100000000).toString(),
-        amount: 1000,
-        currency: 'XOF',
-        channels: 'ALL',
-        description: 'YOUR_PAYMENT_DESCRIPTION',
-        //Fournir ces variables obligatoirement pour le paiements par carte bancaire
-        customer_name: "Joe", //Le nom du client
-        customer_surname: "Down", //Le prenom du client
-        customer_email: "down@test.com", //l'email du client
-        customer_phone_number: "0153754519", //l'email du client
-        customer_address: "BP 0024", //addresse du client
-        customer_city: "Antananarivo", // La ville du client
-        customer_country: "CI", // le code ISO du pays
-        customer_state: "CI", // le code ISO l'état
-        customer_zip_code: "99326", // code postal
-    });
-
-    CinetPay.waitResponse(function (data) {
-        // En cas d'échec
-        if (data.status == "REFUSED") {
-            addFailedSubscription()
+// Initialiser le paiement
+async function initiatePayment() {
+    // Réinitialiser les messages d'erreur
+    document.getElementById('error-message').style.display = 'none';
+    
+    // Récupérer les données du formulaire
+    const nom = document.getElementById('nom').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const totalPrice = parseFloat(document.getElementById('total').value);
+    
+    // Validation
+    if (!nom || !phone) {
+        showError("Veuillez remplir tous les champs obligatoires");
+        return;
+    }
+    
+    if (totalPrice <= 0) {
+        showError("Le montant total doit être supérieur à 0");
+        return;
+    }
+    
+    if (phone.length < 8) {
+        showError("Numéro de téléphone invalide");
+        return;
+    }
+    
+    // Récupérer les articles
+    const articles = [];
+    document.querySelectorAll('.article-item').forEach(item => {
+        const name = item.querySelector('.article-name').value.trim() || "Article";
+        const price = parseFloat(item.querySelector('.article-price').value) || 0;
+        if (price > 0) {
+            const articleObj = {};
+            articleObj[name] = price;
+            articles.push(articleObj);
         }
-        // En cas de succès
-        else if (data.status == "ACCEPTED") {
-            addSubscription()
-        }
     });
+    
+    if (articles.length === 0) {
+        showError("Veuillez ajouter au moins un article");
+        return;
+    }
+    
+    // Préparer les données de paiement
+    paymentData = {
+        totalPrice: totalPrice,
+        article: articles,
+        personal_Info: [{
+            userId: document.getElementById('userId').value.trim() || "0",
+            orderId: document.getElementById('orderId').value.trim() || Date.now().toString()
+        }],
+        numeroSend: phone,
+        nomclient: nom,
+        return_url: RETURN_URL,
+        webhook_url: window.location.origin + "/webhook.html" // À créer si nécessaire
+    };
+    
+    // Afficher le modal de confirmation
+    document.getElementById('modal-nom').textContent = nom;
+    document.getElementById('modal-phone').textContent = phone;
+    document.getElementById('modal-amount').textContent = totalPrice.toLocaleString();
+    document.getElementById('payment-modal').style.display = 'flex';
+}
 
-    CinetPay.onError(function (data) {
-        console.log(data);
-    });
+// Rediriger vers le paiement
+async function redirectToPayment() {
+    const button = document.querySelector('.btn-pay');
+    const buttonText = button.querySelector('.btn-text');
+    const spinner = button.querySelector('.loading-spinner');
+    
+    // Afficher le spinner
+    button.disabled = true;
+    buttonText.style.display = 'none';
+    spinner.style.display = 'block';
+    
+    try {
+        // Envoyer la requête à l'API MoneyFusion
+        const response = await axios.post(API_URL, paymentData, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.data.status) {
+            // Sauvegarder le token pour vérification ultérieure
+            currentToken = response.data.token;
+            localStorage.setItem('paymentToken', currentToken);
+            localStorage.setItem('paymentData', JSON.stringify(paymentData));
+            
+            // Rediriger vers la page de paiement MoneyFusion
+            window.location.href = response.data.url;
+        } else {
+            throw new Error(response.data.message || "Erreur lors de l'initialisation du paiement");
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        
+        // Afficher l'erreur dans le modal
+        document.getElementById('modal-error').textContent = 
+            error.response?.data?.message || error.message || "Une erreur est survenue";
+        document.getElementById('modal-error').style.display = 'block';
+        
+        // Réinitialiser le bouton
+        button.disabled = false;
+        buttonText.style.display = 'inline';
+        spinner.style.display = 'none';
+    }
+}
+
+// Fermer le modal
+function closeModal() {
+    document.getElementById('payment-modal').style.display = 'none';
+    document.getElementById('modal-error').style.display = 'none';
+    
+    // Réinitialiser le bouton de paiement
+    const button = document.querySelector('.btn-pay');
+    const buttonText = button.querySelector('.btn-text');
+    const spinner = button.querySelector('.loading-spinner');
+    button.disabled = false;
+    buttonText.style.display = 'inline';
+    spinner.style.display = 'none';
+}
+
+// Afficher une erreur
+function showError(message) {
+    const errorDiv = document.getElementById('error-message');
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+    errorDiv.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Fonction pour vérifier le statut du paiement (à appeler depuis la page de retour)
+async function checkPaymentStatus(token) {
+    if (!token) return null;
+    
+    try {
+        const response = await axios.get(
+            `https://www.pay.moneyfusion.net/paiementNotif/${token}`
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Erreur vérification statut:', error);
+        return null;
+    }
+}
+
+// Exemple de fonction à ajouter à callback.html
+function processCallback() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token') || localStorage.getItem('paymentToken');
+    
+    if (token) {
+        // Vérifier le statut
+        checkPaymentStatus(token).then(data => {
+            if (data?.status) {
+                if (data.data.statut === 'paid') {
+                    // Paiement réussi
+                    alert('Paiement effectué avec succès !');
+                    // Rediriger vers une page de confirmation
+                    window.location.href = '/success.html';
+                } else {
+                    // Paiement échoué
+                    alert('Paiement non effectué. Veuillez réessayer.');
+                    window.location.href = '/';
+                }
+            }
+        });
+    }
 }
