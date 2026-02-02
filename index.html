@@ -1,116 +1,44 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Paiement - MoneyFusion</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <title>Paiement MoneyFusion</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .form-group { margin: 15px 0; }
+        input { width: 100%; padding: 10px; }
+        button { background: #007bff; color: white; padding: 15px; border: none; width: 100%; }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>💰 Paiement Sécurisé</h1>
-            <p>Effectuez votre paiement via MoneyFusion</p>
-        </header>
-
-        <main>
-            <div class="payment-container">
-                <div class="form-section">
-                    <h2>Informations de paiement</h2>
-                    
-                    <div class="form-group">
-                        <label for="nom">Nom complet *</label>
-                        <input type="text" id="nom" placeholder="Ex: John Doe" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="phone">Numéro de téléphone *</label>
-                        <input type="tel" id="phone" placeholder="Ex: 01010101" required>
-                    </div>
-
-                    <div class="articles-section">
-                        <h3>Articles à payer</h3>
-                        <div id="articles-container">
-                            <div class="article-item">
-                                <input type="text" class="article-name" placeholder="Nom de l'article">
-                                <input type="number" class="article-price" placeholder="Prix" min="0">
-                                <button type="button" class="remove-article" onclick="removeArticle(this)">×</button>
-                            </div>
-                        </div>
-                        <button type="button" class="btn-add" onclick="addArticle()">+ Ajouter un article</button>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="total">Montant total (FCFA)</label>
-                        <input type="number" id="total" readonly>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="orderId">ID de commande (optionnel)</label>
-                        <input type="text" id="orderId" placeholder="Votre référence">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="userId">ID utilisateur (optionnel)</label>
-                        <input type="text" id="userId" placeholder="Votre ID">
-                    </div>
-
-                    <button class="btn-pay" onclick="initiatePayment()">
-                        <span class="btn-text">Payer maintenant</span>
-                        <span class="loading-spinner" style="display: none;"></span>
-                    </button>
-
-                    <div id="error-message" class="error-message"></div>
-                </div>
-
-                <div class="info-section">
-                    <h3>💡 Comment ça marche</h3>
-                    <ul>
-                        <li>Remplissez vos informations</li>
-                        <li>Ajoutez les articles à payer</li>
-                        <li>Cliquez sur "Payer maintenant"</li>
-                        <li>Vous serez redirigé vers MoneyFusion</li>
-                        <li>Effectuez le paiement via mobile money</li>
-                        <li>Retour automatique après paiement</li>
-                    </ul>
-
-                    <div class="payment-methods">
-                        <h4>Moyens de paiement acceptés</h4>
-                        <div class="methods">
-                            <span>📱 Orange Money</span>
-                            <span>📱 MTN Mobile Money</span>
-                            <span>📱 Moov Money</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="payment-modal" class="modal">
-                <div class="modal-content">
-                    <span class="close" onclick="closeModal()">&times;</span>
-                    <h2>Redirection en cours</h2>
-                    <p>Vous allez être redirigé vers MoneyFusion pour finaliser le paiement.</p>
-                    <div class="payment-info">
-                        <p><strong>Nom:</strong> <span id="modal-nom"></span></p>
-                        <p><strong>Téléphone:</strong> <span id="modal-phone"></span></p>
-                        <p><strong>Montant:</strong> <span id="modal-amount"></span> FCFA</p>
-                    </div>
-                    <div class="modal-actions">
-                        <button class="btn-confirm" onclick="redirectToPayment()">Confirmer et payer</button>
-                        <button class="btn-cancel" onclick="closeModal()">Annuler</button>
-                    </div>
-                    <div id="modal-error" class="error-message"></div>
-                </div>
-            </div>
-        </main>
-
-        <footer>
-            <p>© 2024 - Paiement sécurisé par <strong>MoneyFusion</strong></p>
-            <p class="security-info">🔒 Transactions 100% sécurisées</p>
-        </footer>
-    </div>
-
-    <script src="script.js"></script>
+    <h1>Paiement via MoneyFusion</h1>
+    
+    <!-- Formulaire direct vers MoneyFusion -->
+    <form method="POST" action="https://my.moneyfusion.net/697c93c41efb8281bec22b69">
+        
+        <div class="form-group">
+            <label>Nom complet :</label>
+            <input type="text" name="nomclient" required value="John Doe">
+        </div>
+        
+        <div class="form-group">
+            <label>Téléphone :</label>
+            <input type="tel" name="numeroSend" required value="01010101">
+        </div>
+        
+        <div class="form-group">
+            <label>Montant (FCFA) :</label>
+            <input type="number" name="totalPrice" required value="2000">
+        </div>
+        
+        <!-- Articles au format JSON -->
+        <input type="hidden" name="article" value='[{"Sac": 1000}, {"Chaussures": 1000}]'>
+        
+        <!-- Autres infos -->
+        <input type="hidden" name="personal_Info" value='[{"orderId": "12345", "userId": "1"}]'>
+        <input type="hidden" name="return_url" value="https://appsante.onrender.com/success.html">
+        <input type="hidden" name="webhook_url" value="https://appsante.onrender.com/webhook.html">
+        
+        <button type="submit">Payer avec MoneyFusion</button>
+    </form>
 </body>
 </html>
